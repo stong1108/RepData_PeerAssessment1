@@ -7,19 +7,74 @@ output:
 
 
 ## Loading and preprocessing the data
-
-
+``` {r}
+data <- read.csv("activity.csv")
+clean <- data[!is.na(data$steps),]
+```
 
 ## What is mean total number of steps taken per day?
-
+``` {r}
+hist(clean$steps)
+mean(clean$steps)
+median(clean$steps)
+```
 
 
 ## What is the average daily activity pattern?
+``` {r}
+library(ggplot2)
+acrossDates <- tapply(clean$steps, clean$interval, mean)
+intervals <- unique(clean$interval)
+acrossDates <- cbind(intervals, acrossDates)
+df <- data.frame(acrossDates)
+qplot(intervals, acrossDates, data = df, geom = "line")
 
-
+df$intervals[df$acrossDates == max(df$acrossDates)]
+```
 
 ## Imputing missing values
-
-
+``` {r}
+sum(!complete.cases(data))
+data$steps[is.na(data$steps)] <- mean(clean$steps)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+``` {r}
+library(lubridate)
+library(chron)
+library(stringr)
+library(lattice)
+#data <- transform(data, weekend = is.weekend(ymd(data$date)))
+#data$weekend <- factor(data$weekend, levels = c("FALSE", "TRUE"), labels = c("weekday", "weekend"))
+
+hm <- str_pad(data$interval, 4, "left", pad = "0")
+hms <- str_pad(time, 6, "right", pad = "0")
+datetimechar <- paste(data$date, hms)
+datetime <- strptime(datetimechar, format = "%Y-%m-%d %H%M%S")
+day <- is.weekend(datetime)
+weekend <- factor(day, levels = c("FALSE", "TRUE"), labels = c("weekday", "weekend"))
+
+acrossDates <- tapply(data$steps, data$interval, mean)
+
+# Split steps and intervals into weekday/weekend groups
+wksteps <- split(data$steps, data$weekend)
+wkints <- split(data$interval, data$weekend)
+
+# Combine steps and intervals into weekday/weekend groups
+df_day <- data.frame(cbind(wkints$weekday, wksteps$weekday))
+names(df_day) <- c("interval", "steps")
+avgDay <- tapply(df_day$steps, df_day$interval, mean)
+tmpDay <- cbind(unique(data$interval), avgDay, rep("weekday", length(avgDay)))
+names(tmpDay) <- c("interval", "steps", "day")
+
+df_end <- data.frame(cbind(wkints$weekend, wksteps$weekend))
+names(df_end) <- c("interval", "steps")
+avgEnd <- tapply(df_end$steps, df_end$interval, mean)
+tmpEnd <- cbind(unique(data$interval), avgEnd, rep("weekend", length(avgEnd)))
+names(tmpEnd) <- c("interval", "steps", "day")
+
+avgs <- rbind(tmpDay, tmpEnd)
+
+xyplot(avgsteps ~ interval|day, data = avgs, type = "l", layout = c(1, 2))
+#p <- ggplot(avgs, aes(interval, avgsteps)) + geom_line() + facet_grid(day ~ .)
+```
