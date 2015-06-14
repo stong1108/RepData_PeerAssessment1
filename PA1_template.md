@@ -37,17 +37,18 @@ median(clean$steps)
 
 ```r
 library(ggplot2)
+
+# Average the steps over each interval
 acrossDates <- tapply(clean$steps, clean$interval, mean)
-intervals <- unique(clean$interval)
-acrossDates <- cbind(intervals, acrossDates)
-df <- data.frame(acrossDates)
-qplot(intervals, acrossDates, data = df, geom = "line")
+df <- data.frame(intervals = unique(clean$interval), avgSteps = acrossDates)
+qplot(intervals, avgSteps, data = df, geom = "line")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
 
 ```r
-df$intervals[df$acrossDates == max(df$acrossDates)]
+# Find interval corresponding to max average steps
+df$intervals[df$avgSteps == max(df$avgSteps)]
 ```
 
 ```
@@ -57,6 +58,7 @@ df$intervals[df$acrossDates == max(df$acrossDates)]
 ## Imputing missing values
 
 ```r
+# Sum number of missing values
 sum(!complete.cases(data))
 ```
 
@@ -65,6 +67,7 @@ sum(!complete.cases(data))
 ```
 
 ```r
+# Replace missing values with average of non-missing values
 data$steps[is.na(data$steps)] <- mean(clean$steps)
 ```
 
@@ -73,30 +76,30 @@ data$steps[is.na(data$steps)] <- mean(clean$steps)
 ```r
 library(lubridate)
 library(chron)
-```
-
-```
-## 
-## Attaching package: 'chron'
-## 
-## The following objects are masked from 'package:lubridate':
-## 
-##     days, hours, minutes, seconds, years
-```
-
-```r
 library(lattice)
+
+# Determine if date is weekday/weekend
 data <- transform(data, weekend = is.weekend(ymd(data$date)))
 data$weekend <- factor(data$weekend, levels = c("FALSE", "TRUE"), labels = c("weekday", "weekend"))
 
-# Split steps and intervals into weekday/weekend groups
+# Split steps and intervals into weekday/weekend 
 wksteps <- split(data$steps, data$weekend)
 wkints <- split(data$interval, data$weekend)
 
-# Combine steps and intervals into weekday/weekend groups
-df_day <- data.frame(cbind(wkints$weekday, wksteps$weekday))
-names(df_day) <- c("interval", "steps")
+# Combine steps and intervals into weekday/weekend 
+df_day <- data.frame(interval = wkints$weekday, steps = wksteps$weekday)
+avgDay <- tapply(df_day$steps, df_day$interval, mean)
+tmpDay <- data.frame(interval = unique(data$interval), steps = avgDay, day = rep("weekday", length(avgDay)))
 
-df_end <- data.frame(cbind(wkints$weekend, wksteps$weekend))
-names(df_end) <- c("interval", "steps")
+df_end <- data.frame(interval = wkints$weekend, steps = wksteps$weekend)
+avgEnd <- tapply(df_end$steps, df_end$interval, mean)
+tmpEnd <- data.frame(interval = unique(data$interval), steps = avgEnd, day = rep("weekend", length(avgEnd)))
+
+# Combine weekday/weekend data frames into master data frame
+avgs <- rbind(tmpDay, tmpEnd)
+
+# Panel plot
+xyplot(steps ~ interval|day, data = avgs, type = "l", layout = c(1, 2))
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
