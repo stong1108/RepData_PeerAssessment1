@@ -2,36 +2,30 @@
 
 
 ## Loading and preprocessing the data
+In this step, we read the csv file and filter out the rows with missing values.
 
 ```r
-data <- read.csv("activity.csv")
-clean <- data[!is.na(data$steps),]
+orig <- read.csv("activity.csv")
+clean <- orig[!is.na(orig$steps),]
 ```
 
 ## What is mean total number of steps taken per day?
+Here, we use tapply to sum steps over each day. Some days are not included in the date, so the NA values that arise must be filtered out before constructing the histogram.hist
 
 ```r
-hist(clean$steps)
+options(scipen = 3)
+Steps <- tapply(clean$steps, clean$date, sum)
+Steps <- Steps[!is.na(Steps)]
+hist(Steps)
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
 
 ```r
-mean(clean$steps)
+MeanSteps <- round(mean(Steps))
+MedianSteps <- round(median(Steps))
 ```
-
-```
-## [1] 37.3826
-```
-
-```r
-median(clean$steps)
-```
-
-```
-## [1] 0
-```
-
+The mean of the total steps per day is 10766 steps. The median of the total steps per day is 10765 steps.
 
 ## What is the average daily activity pattern?
 
@@ -48,28 +42,21 @@ qplot(intervals, avgSteps, data = df, geom = "line")
 
 ```r
 # Find interval corresponding to max average steps
-df$intervals[df$avgSteps == max(df$avgSteps)]
+maxint <- df$intervals[df$avgSteps == max(df$avgSteps)]
 ```
-
-```
-## [1] 835
-```
+The maximum of the average steps is 206, which occurs in the 835th interval.
 
 ## Imputing missing values
 
 ```r
 # Sum number of missing values
-sum(!complete.cases(data))
-```
+NAsum <- sum(!complete.cases(orig))
 
-```
-## [1] 2304
-```
-
-```r
 # Replace missing values with average of non-missing values
+data <- orig
 data$steps[is.na(data$steps)] <- mean(clean$steps)
 ```
+This dataset contains 2304 NA values. These values are replaced with the average of the available values, 37.3825996 and are stored in a new dataset, `data`.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
