@@ -10,7 +10,7 @@ clean <- orig[!is.na(orig$steps),]
 ```
 
 ## What is mean total number of steps taken per day?
-Here, we use tapply to sum steps over each day. Some days are not included in the date, so the NA values that arise must be filtered out before constructing the histogram.hist
+Here, we use tapply to sum steps over each day. Some days are not included in the date, so the NA values that arise must be filtered out before constructing the histogram.
 
 ```r
 options(scipen = 3)
@@ -58,6 +58,15 @@ data$steps[is.na(data$steps)] <- mean(clean$steps)
 ```
 This dataset contains 2304 NA values. These values are replaced with the average of the available values, 37.3825996 and are stored in a new dataset, `data`.
 
+Now, we can construct an updated histogram with the missing values replaced
+
+```r
+AllSteps <- tapply(data$steps, data$date, sum)
+hist(AllSteps)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
 ## Are there differences in activity patterns between weekdays and weekends?
 
 ```r
@@ -89,4 +98,4 @@ avgs <- rbind(tmpDay, tmpEnd)
 xyplot(steps ~ interval|day, data = avgs, type = "l", layout = c(1, 2))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
